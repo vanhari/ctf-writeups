@@ -358,3 +358,6 @@ find / -name "root.txt" 2>/dev/null
 75599936fb722e39f36551c5cf5a1236
 ```
 
+https://www.verylazytech.com/docker-port-2375-2376
+
+This writeup was very helpful in getting the reverse shell since escaping from docker was new to me
